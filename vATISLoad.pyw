@@ -528,19 +528,19 @@ async def connect_atises(airport_override=None):
 
 def kill_open_instances():
     prev_instances = {}
+    skip_pids = {os.getpid(), os.getppid()}
 
     for q in psutil.process_iter():
+        if q.pid in skip_pids:
+            continue
         if 'python' in q.name():
             for parameter in q.cmdline():
                 if 'vATISLoad' in parameter and parameter.endswith('.pyw'):
                     q_create_time = q.create_time()
                     q_create_datetime = datetime.fromtimestamp(q_create_time)
                     prev_instances[q.pid] = {'process': q, 'start': q_create_datetime}
-    
-    prev_instances = dict(sorted(prev_instances.items(), key=lambda item: item[1]['start']))
-    
-    for i in range(0, len(prev_instances) - 1):
-        k = list(prev_instances.keys())[i]
+
+    for k in prev_instances:
         prev_instances[k]['process'].terminate()
 
 def open_vATIS():
